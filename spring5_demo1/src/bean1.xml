@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
     <!-- 配置User类对象创建 -->
@@ -16,7 +17,26 @@
         -->
         <property name="name" value="Spring5"/>
         <property name="author" value="James"/>
+        <!-- 设置null值-->
+        <!--<property name="address">
+            <null/>
+        </property>-->
+        <!--
+            属性值包含特殊字符
+            1.把<>进行转义 &lt;&gt;
+            2.把带特殊符号内容写到CDATA
+        -->
+        <property name="address" >
+            <value><![CDATA[<<南京>>]]></value>
+        </property>
     </bean>
+
+    <!--
+        p名称空间注入
+        先加入  xmlns:p="http://www.springframework.org/schema/p"
+        再使用 p:name p:author
+    -->
+    <!--<bean id="book" class="com.qinh.Book" p:name="Spring5" p:author="Curry"/>-->
 
     <!-- 使用有参构造注入属性 -->
     <bean id="orders" class="com.qinh.Orders">

@@ -3,6 +3,7 @@ package com.qinh.test;
 import com.qinh.Book;
 import com.qinh.Orders;
 import com.qinh.User;
+import com.qinh.service.UserService;
 import org.junit.Test;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationContext;
@@ -33,7 +34,6 @@ public class TestSpring5 {
         ApplicationContext context = new ClassPathXmlApplicationContext("bean1.xml");
         Book book = context.getBean("book", Book.class);
         System.out.println(book);
-        book.testDemo();
     }
 
     @Test
@@ -41,5 +41,12 @@ public class TestSpring5 {
         ApplicationContext context = new ClassPathXmlApplicationContext("bean1.xml");
         Orders orders = context.getBean("orders", Orders.class);
         System.out.println(orders);
+    }
+
+    @Test
+    public void testUserService(){
+        ApplicationContext context = new ClassPathXmlApplicationContext("bean2.xml");
+        UserService userService = context.getBean("userService", UserService.class);
+        userService.add();
     }
 }

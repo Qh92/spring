@@ -11,6 +11,7 @@ public class Book {
 
     private String name;
     private String author;
+    private String address;
 
     public Book() {
     }
@@ -37,8 +38,21 @@ public class Book {
         this.author = author;
     }
 
-    public void testDemo(){
-        System.out.println(name + " : " + author);
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    @Override
+    public String toString() {
+        return "Book{" +
+                "name='" + name + '\'' +
+                ", author='" + author + '\'' +
+                ", address='" + address + '\'' +
+                '}';
     }
 
     public static void main(String[] args) {
