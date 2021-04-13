@@ -8,7 +8,7 @@
     <bean id="user" class="com.qinh.User"></bean>
 
     <!-- set方法注入属性 -->
-    <bean id="book" class="com.qinh.Book">
+    <bean id="book" class="com.qinh.Book" scope="prototype">
         <!--
             类必须要有set方法
            使用property完成属性注入

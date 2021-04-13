@@ -46,14 +46,14 @@ public class Book {
         this.address = address;
     }
 
-    @Override
+    /*@Override
     public String toString() {
         return "Book{" +
                 "name='" + name + '\'' +
                 ", author='" + author + '\'' +
                 ", address='" + address + '\'' +
                 '}';
-    }
+    }*/
 
     public static void main(String[] args) {
         Book book = new Book();

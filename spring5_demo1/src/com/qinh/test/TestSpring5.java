@@ -32,8 +32,12 @@ public class TestSpring5 {
     @Test
     public void testBook1(){
         ApplicationContext context = new ClassPathXmlApplicationContext("bean1.xml");
-        Book book = context.getBean("book", Book.class);
-        System.out.println(book);
+        Book book1 = context.getBean("book", Book.class);
+        Book book2 = context.getBean("book", Book.class);
+        //两次输出对象地址是相同的，默认为单实例对象
+        //设置scope="prototype"后，两个地址不相同
+        System.out.println(book1);
+        System.out.println(book2);
     }
 
     @Test

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!-- 级联赋值 -->
+    <bean id="emp" class="com.qinh.bean.Emp">
+        <!-- 设置两个普通属性  -->
+        <property name="ename" value="lucy"/>
+        <property name="gender" value="女"/>
+        <!-- 级联赋值  第一种赋值方式 -->
+        <property name="dept" ref="dept" />
+        <!-- 级联赋值 第二种赋值方式：需要设置dept的get方法-->
+        <property name="dept.dname" value="技术部"/>
+    </bean>
+
+    <bean id="dept" class="com.qinh.bean.Dept">
+        <property name="dname" value="财务部"/>
+    </bean>
+
+</beans>
