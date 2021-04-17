@@ -2,6 +2,7 @@ package com.qinh.aspect.annotation;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
@@ -12,14 +13,21 @@ import org.springframework.stereotype.Component;
  * @Version 1.0
  */
 @Component
-@Aspect()
+@Aspect
+@Order(3) //数字类型值越小优先级越高
 public class UserProxy {
+
+    //相同切入点抽取
+    @Pointcut(value = "execution(* com.qinh.aspect.annotation.User.add(..))")
+    public void pointdemo(){
+
+    }
 
     //前置通知
     //@Before注解表示作为前置通知
-    @Before(value = "execution(* com.qinh.aspect.annotation.User.add(..))")
+    @Before(value = "pointdemo()")
     public void before(){
-        System.out.println("before......");
+        System.out.println("UserProxy before......");
     }
 
     //最终通知

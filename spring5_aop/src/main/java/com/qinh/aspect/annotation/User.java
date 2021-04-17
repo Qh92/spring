@@ -14,12 +14,12 @@ public class User {
 
     public void add(){
 
-        try {
+        /*try {
             int i = 10 / 0;
         } catch (Exception e) {
             //e.printStackTrace();
             throw new RuntimeException("java.lang.ArithmeticException");
-        }
+        }*/
 
         System.out.println("add ........");
     }
