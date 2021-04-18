@@ -21,6 +21,7 @@ public class UserDaoImpl implements UserDao{
     @Override
     public void addMoney(){
         String sql = "update t_account set money = money + ? where username = ? ";
+        int i = 10 / 0;
         jdbcTemplate.update(sql,100,"lucy");
     }
 

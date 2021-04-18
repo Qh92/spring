@@ -10,10 +10,13 @@
 
 
     <dependencies>
+        <!-- https://mvnrepository.com/artifact/org.aspectj/aspectjweaver -->
         <dependency>
             <groupId>org.aspectj</groupId>
             <artifactId>aspectjweaver</artifactId>
+            <version>1.9.6</version>
         </dependency>
+
         <!--    spring 配置文件-->
         <dependency>
             <groupId>org.springframework</groupId>
