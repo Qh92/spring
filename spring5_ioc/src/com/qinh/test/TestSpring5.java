@@ -6,8 +6,10 @@ import com.qinh.User;
 import com.qinh.service.UserService;
 import org.junit.Test;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.xml.XmlBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.core.io.ClassPathResource;
 
 /**
  * @author Qh
@@ -21,6 +23,9 @@ public class TestSpring5 {
 
         //1.加载Spring配置文件
         //BeanFactory beanFactory = new ClassPathXmlApplicationContext("bean1.xml");
+        //解析xml的时候不会创建bean实例
+        BeanFactory beanFactory = new XmlBeanFactory(new ClassPathResource("bean1.xml"));
+        //解析xml的时候就会创建bean实例（除懒加载等不会创建对象）
         ApplicationContext context = new ClassPathXmlApplicationContext("bean1.xml");
 
         //2.获取配置创建的对象
