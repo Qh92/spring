@@ -22,5 +22,6 @@ public class User {
         }*/
 
         System.out.println("add ........");
+        //int i = 10 / 0;
     }
 }

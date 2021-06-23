@@ -1,5 +1,5 @@
-import com.alibaba.druid.pool.DruidDataSource;
 import com.qinh.config.SpringConfig;
+import com.qinh.entity.Person;
 import com.qinh.service.UserService;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
@@ -35,6 +35,15 @@ public class TestSpring {
         UserService userService = context.getBean("userService", UserService.class);
         System.out.println("获取bean实例 ： " + userService);
         userService.add();
+    }
+
+    @Test
+    public void t3(){
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig.class);
+
+        //2.获取配置创建的对象
+        Person person = context.getBean("person", Person.class);
+        System.out.println("获取bean实例 ： " + person);
     }
 
 }
