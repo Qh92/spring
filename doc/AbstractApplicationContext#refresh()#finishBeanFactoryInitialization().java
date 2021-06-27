@@ -1,3 +1,4 @@
+//实例化和初始化
 //AbstractApplicationContext#refresh
 finishBeanFactoryInitialization(beanFactory);
 
@@ -415,6 +416,7 @@ protected Object doCreateBean(final String beanName, final RootBeanDefinition mb
 	try {
 		//初始化bean属性
 		populateBean(beanName, mbd, instanceWrapper);
+		//执行后置处理器和初始化方法
 		exposedObject = initializeBean(beanName, exposedObject, mbd);
 	}
 	catch (Throwable ex) {
@@ -1012,25 +1014,182 @@ private void processLocalProperty(PropertyTokenHolder tokens, PropertyValue pv) 
 //BeanWrapperImpl#setValue
 //通过反射注入属性值
 public void setValue(final @Nullable Object value) throws Exception {
-		final Method writeMethod = (this.pd instanceof GenericTypeAwarePropertyDescriptor ?
-				((GenericTypeAwarePropertyDescriptor) this.pd).getWriteMethodForActualAccess() :
-				this.pd.getWriteMethod());
+	final Method writeMethod = (this.pd instanceof GenericTypeAwarePropertyDescriptor ?
+			((GenericTypeAwarePropertyDescriptor) this.pd).getWriteMethodForActualAccess() :
+			this.pd.getWriteMethod());
+	if (System.getSecurityManager() != null) {
+		AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+			ReflectionUtils.makeAccessible(writeMethod);
+			return null;
+		});
+		try {
+			AccessController.doPrivileged((PrivilegedExceptionAction<Object>) () ->
+					writeMethod.invoke(getWrappedInstance(), value), acc);
+		}
+		catch (PrivilegedActionException ex) {
+			throw ex.getException();
+		}
+	}
+	else {
+		ReflectionUtils.makeAccessible(writeMethod);
+		//通过反射注入属性值 setXX
+		writeMethod.invoke(getWrappedInstance(), value);
+	}
+}
+
+//AbstractAutowireCapableBeanFactory#initializeBean
+protected Object initializeBean(String beanName, Object bean, @Nullable RootBeanDefinition mbd) {
+	if (System.getSecurityManager() != null) {
+		AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+			invokeAwareMethods(beanName, bean);
+			return null;
+		}, getAccessControlContext());
+	}
+	else {
+		invokeAwareMethods(beanName, bean);
+	}
+
+	Object wrappedBean = bean;
+	if (mbd == null || !mbd.isSynthetic()) {
+		//执行后置处理器的前置方法
+		wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
+	}
+
+	try {
+		//执行初始化方法
+		invokeInitMethods(beanName, wrappedBean, mbd);
+	}
+	catch (Throwable ex) {
+		throw new BeanCreationException(
+				(mbd != null ? mbd.getResourceDescription() : null),
+				beanName, "Invocation of init method failed", ex);
+	}
+	if (mbd == null || !mbd.isSynthetic()) {
+		//执行后置处理器的后置方法
+		wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
+	}
+
+	return wrappedBean;
+}
+
+//AbstractAutowireCapableBeanFactory#applyBeanPostProcessorsBeforeInitialization
+public Object applyBeanPostProcessorsBeforeInitialization(Object existingBean, String beanName)
+		throws BeansException {
+
+	Object result = existingBean;
+	for (BeanPostProcessor processor : getBeanPostProcessors()) {
+		Object current = processor.postProcessBeforeInitialization(result, beanName);
+		if (current == null) {
+			return result;
+		}
+		result = current;
+	}
+	return result;
+}
+
+//AbstractAutowireCapableBeanFactory#applyBeanPostProcessorsAfterInitialization
+public Object applyBeanPostProcessorsAfterInitialization(Object existingBean, String beanName)
+		throws BeansException {
+
+	Object result = existingBean;
+	for (BeanPostProcessor processor : getBeanPostProcessors()) {
+		Object current = processor.postProcessAfterInitialization(result, beanName);
+		if (current == null) {
+			return result;
+		}
+		result = current;
+	}
+	return result;
+}
+
+//AbstractAutowireCapableBeanFactory#invokeInitMethods
+//执行初始化方法，如果bean实现了InitializingBean会先执行afterPropertiesSet()方法，再执行指定的初始化方法 
+protected void invokeInitMethods(String beanName, final Object bean, @Nullable RootBeanDefinition mbd)
+		throws Throwable {
+
+	boolean isInitializingBean = (bean instanceof InitializingBean);
+	if (isInitializingBean && (mbd == null || !mbd.isExternallyManagedInitMethod("afterPropertiesSet"))) {
+		if (logger.isTraceEnabled()) {
+			logger.trace("Invoking afterPropertiesSet() on bean with name '" + beanName + "'");
+		}
 		if (System.getSecurityManager() != null) {
-			AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
-				ReflectionUtils.makeAccessible(writeMethod);
-				return null;
-			});
 			try {
-				AccessController.doPrivileged((PrivilegedExceptionAction<Object>) () ->
-						writeMethod.invoke(getWrappedInstance(), value), acc);
+				AccessController.doPrivileged((PrivilegedExceptionAction<Object>) () -> {
+					((InitializingBean) bean).afterPropertiesSet();
+					return null;
+				}, getAccessControlContext());
 			}
-			catch (PrivilegedActionException ex) {
-				throw ex.getException();
+			catch (PrivilegedActionException pae) {
+				throw pae.getException();
 			}
 		}
 		else {
-			ReflectionUtils.makeAccessible(writeMethod);
-			//通过反射注入属性值 setXX
-			writeMethod.invoke(getWrappedInstance(), value);
+			((InitializingBean) bean).afterPropertiesSet();
 		}
 	}
+
+	if (mbd != null && bean.getClass() != NullBean.class) {
+		String initMethodName = mbd.getInitMethodName();
+		//如果设置了初始化方法，执行初始化方法
+		if (StringUtils.hasLength(initMethodName) &&
+				!(isInitializingBean && "afterPropertiesSet".equals(initMethodName)) &&
+				!mbd.isExternallyManagedInitMethod(initMethodName)) {
+			invokeCustomInitMethod(beanName, bean, mbd);
+		}
+	}
+}
+
+//AbstractAutowireCapableBeanFactory#invokeCustomInitMethod
+protected void invokeCustomInitMethod(String beanName, final Object bean, RootBeanDefinition mbd)
+		throws Throwable {
+
+	String initMethodName = mbd.getInitMethodName();
+	Assert.state(initMethodName != null, "No init method set");
+	Method initMethod = (mbd.isNonPublicAccessAllowed() ?
+			BeanUtils.findMethod(bean.getClass(), initMethodName) :
+			ClassUtils.getMethodIfAvailable(bean.getClass(), initMethodName));
+
+	if (initMethod == null) {
+		if (mbd.isEnforceInitMethod()) {
+			throw new BeanDefinitionValidationException("Could not find an init method named '" +
+					initMethodName + "' on bean with name '" + beanName + "'");
+		}
+		else {
+			if (logger.isTraceEnabled()) {
+				logger.trace("No default init method named '" + initMethodName +
+						"' found on bean with name '" + beanName + "'");
+			}
+			// Ignore non-existent default lifecycle methods.
+			return;
+		}
+	}
+
+	if (logger.isTraceEnabled()) {
+		logger.trace("Invoking init method  '" + initMethodName + "' on bean with name '" + beanName + "'");
+	}
+	Method methodToInvoke = ClassUtils.getInterfaceMethodIfPossible(initMethod);
+
+	if (System.getSecurityManager() != null) {
+		AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+			ReflectionUtils.makeAccessible(methodToInvoke);
+			return null;
+		});
+		try {
+			AccessController.doPrivileged((PrivilegedExceptionAction<Object>) () ->
+					methodToInvoke.invoke(bean), getAccessControlContext());
+		}
+		catch (PrivilegedActionException pae) {
+			InvocationTargetException ex = (InvocationTargetException) pae.getException();
+			throw ex.getTargetException();
+		}
+	}
+	else {
+		try {
+			ReflectionUtils.makeAccessible(methodToInvoke);
+			methodToInvoke.invoke(bean);
+		}
+		catch (InvocationTargetException ex) {
+			throw ex.getTargetException();
+		}
+	}
+}
