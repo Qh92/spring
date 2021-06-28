@@ -19,6 +19,7 @@ protected final void refreshBeanFactory() throws BeansException {
 		//创建DefaultListableBeanFactory beanFactory工厂
 		DefaultListableBeanFactory beanFactory = createBeanFactory();
 		beanFactory.setSerializationId(getId());
+		//设置bean的创建是否支持覆盖
 		customizeBeanFactory(beanFactory);
 		loadBeanDefinitions(beanFactory);
 		this.beanFactory = beanFactory;
@@ -45,6 +46,7 @@ protected void loadBeanDefinitions(DefaultListableBeanFactory beanFactory) throw
 	// Configure the bean definition reader with this context's
 	// resource loading environment.
 	beanDefinitionReader.setEnvironment(this.getEnvironment());
+	//this == ClassPathXmlApplicationContext
 	beanDefinitionReader.setResourceLoader(this);
 	beanDefinitionReader.setEntityResolver(new ResourceEntityResolver(this));
 
@@ -52,6 +54,7 @@ protected void loadBeanDefinitions(DefaultListableBeanFactory beanFactory) throw
 	// then proceed with actually loading the bean definitions.
 	// 加载beanDefinitionReader
 	initBeanDefinitionReader(beanDefinitionReader);
+	//创建beanDefinition
 	loadBeanDefinitions(beanDefinitionReader);
 }
 
@@ -83,6 +86,7 @@ public int loadBeanDefinitions(String location) throws BeanDefinitionStoreExcept
 
 //AbstractBeanDefinitionReader#loadBeanDefinitions
 public int loadBeanDefinitions(String location, @Nullable Set<Resource> actualResources) throws BeanDefinitionStoreException {
+	//ClassPathXmlApplicationContext
 	ResourceLoader resourceLoader = getResourceLoader();
 	if (resourceLoader == null) {
 		throw new BeanDefinitionStoreException(
@@ -123,6 +127,7 @@ public int loadBeanDefinitions(String location, @Nullable Set<Resource> actualRe
 
 //XmlBeanDefinitionReader#loadBeanDefinitions
 public int loadBeanDefinitions(Resource resource) throws BeanDefinitionStoreException {
+	//使用默认的编码和字符集
 	return loadBeanDefinitions(new EncodedResource(resource));
 }
 
@@ -238,15 +243,17 @@ protected void doRegisterBeanDefinitions(Element root) {
 			}
 		}
 	}
-
+	//可以自定义解析xml之前的工作
 	preProcessXml(root);
 	//解析beanDefinition
 	parseBeanDefinitions(root, this.delegate);
+	//自定义解析xml之后的工作
 	postProcessXml(root);
 
 	this.delegate = parent;
 }
 //DefaultBeanDefinitionDocumentReader#parseBeanDefinitions
+//从beans开始解析
 protected void parseBeanDefinitions(Element root, BeanDefinitionParserDelegate delegate) {
 	if (delegate.isDefaultNamespace(root)) {
 		NodeList nl = root.getChildNodes();
@@ -290,6 +297,7 @@ private void parseDefaultElement(Element ele, BeanDefinitionParserDelegate deleg
 }
 
 //DefaultBeanDefinitionDocumentReader#processBeanDefinition
+//解析bean标签，并将bean标签的属性映射到beanDefinition对象中
 protected void processBeanDefinition(Element ele, BeanDefinitionParserDelegate delegate) {
 	//解析并封装了GenericBeanDefinition 
 	//new BeanDefinitionHolder(beanDefinition, beanName, aliasesArray)
@@ -480,6 +488,8 @@ private final Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHash
 private volatile List<String> beanDefinitionNames = new ArrayList<>(256);
 /** List of names of manually registered singletons, in registration order. */
 private volatile Set<String> manualSingletonNames = new LinkedHashSet<>(16);
+/** Names of beans that have already been created at least once. */
+private final Set<String> alreadyCreated = Collections.newSetFromMap(new ConcurrentHashMap<>(256));
 
 public void registerBeanDefinition(String beanName, BeanDefinition beanDefinition)
 		throws BeanDefinitionStoreException {

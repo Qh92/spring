@@ -9,7 +9,8 @@
 
     <!-- 配置后置处理器 -->
     <bean id="myBeanPost" class="com.qinh.bean.MyBeanPost">
-
     </bean>
+
+    <bean id="myInstantiationBeanPost" class="com.qinh.bean.MyInstantiationBeanPost"/>
 
 </beans>

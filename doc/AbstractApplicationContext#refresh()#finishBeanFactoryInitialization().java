@@ -283,23 +283,101 @@ public Object getSingleton(String beanName) {
 }
 
 //DefaultSingletonBeanRegistry#getSingleton
+//为什么不能只用一级缓存?因为只用一级缓存，当前缓存里会有完成对象和半成品对象，如果此时获取对象，则有可能获取到半成品对象
 protected Object getSingleton(String beanName, boolean allowEarlyReference) {
+	//先从一级缓存中取数据
 	Object singletonObject = this.singletonObjects.get(beanName);
 	//一级缓存中的值为空，并判断bean是否正在创建
 	if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
+		//这里加锁的目的：防止bean还未创建成功，就开始获取bean。
+		//如果当前能拿到这把锁，并且bean还未开始创建，则获取的对象为null
+		//因为在创建bean对象时，也是singletonObjects同一把锁
 		synchronized (this.singletonObjects) {
+			//再从二级缓存中取
 			singletonObject = this.earlySingletonObjects.get(beanName);
 			if (singletonObject == null && allowEarlyReference) {
 				ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
 				if (singletonFactory != null) {
+					//三级缓存中获取匿名内部类,此时会调用getEarlyBeanReference(beanName, mbd, bean)方法
+					//如果此时有代理对象，会返回代理对象。每次调用一下该方法就会返回一个新的代理对象。
+					//所以需要将三级缓存的半成品对象添加进二级缓存，避免每次都返回一个新的匿名内部类。
 					singletonObject = singletonFactory.getObject();
+					//再将半成品对象添加进二级缓存中
 					this.earlySingletonObjects.put(beanName, singletonObject);
+					//将半成品对象从三级缓存中移除
 					this.singletonFactories.remove(beanName);
 				}
 			}
 		}
 	}
 	return singletonObject;
+}
+
+//DefaultSingletonBeanRegistry#getSingleton
+public Object getSingleton(String beanName, ObjectFactory<?> singletonFactory) {
+	Assert.notNull(beanName, "Bean name must not be null");
+	synchronized (this.singletonObjects) {
+		Object singletonObject = this.singletonObjects.get(beanName);
+		if (singletonObject == null) {
+			if (this.singletonsCurrentlyInDestruction) {
+				throw new BeanCreationNotAllowedException(beanName,
+						"Singleton bean creation not allowed while singletons of this factory are in destruction " +
+						"(Do not request a bean from a BeanFactory in a destroy method implementation!)");
+			}
+			if (logger.isDebugEnabled()) {
+				logger.debug("Creating shared instance of singleton bean '" + beanName + "'");
+			}
+			beforeSingletonCreation(beanName);
+			boolean newSingleton = false;
+			boolean recordSuppressedExceptions = (this.suppressedExceptions == null);
+			if (recordSuppressedExceptions) {
+				this.suppressedExceptions = new LinkedHashSet<>();
+			}
+			try {
+				//执行createBean方法
+				singletonObject = singletonFactory.getObject();
+				newSingleton = true;
+			}
+			catch (IllegalStateException ex) {
+				// Has the singleton object implicitly appeared in the meantime ->
+				// if yes, proceed with it since the exception indicates that state.
+				singletonObject = this.singletonObjects.get(beanName);
+				if (singletonObject == null) {
+					throw ex;
+				}
+			}
+			catch (BeanCreationException ex) {
+				if (recordSuppressedExceptions) {
+					for (Exception suppressedException : this.suppressedExceptions) {
+						ex.addRelatedCause(suppressedException);
+					}
+				}
+				throw ex;
+			}
+			finally {
+				if (recordSuppressedExceptions) {
+					this.suppressedExceptions = null;
+				}
+				afterSingletonCreation(beanName);
+			}
+			if (newSingleton) {
+				//将完全体对象添加进一级缓存，并同时移除二级、三级缓存
+				addSingleton(beanName, singletonObject);
+			}
+		}
+		return singletonObject;
+	}
+}
+
+//DefaultSingletonBeanRegistry#addSingleton
+//将完全体对象添加进一级缓存，并同时移除二级、三级缓存
+protected void addSingleton(String beanName, Object singletonObject) {
+	synchronized (this.singletonObjects) {
+		this.singletonObjects.put(beanName, singletonObject);
+		this.singletonFactories.remove(beanName);
+		this.earlySingletonObjects.remove(beanName);
+		this.registeredSingletons.add(beanName);
+	}
 }
 
 
@@ -401,6 +479,7 @@ protected Object doCreateBean(final String beanName, final RootBeanDefinition mb
 
 	// Eagerly cache singletons to be able to resolve circular references
 	// even when triggered by lifecycle interfaces like BeanFactoryAware.
+	//判断当前bean是否正在创建，是否存在循环依赖。如果存在循环依赖，earlySingletonExposure == true
 	boolean earlySingletonExposure = (mbd.isSingleton() && this.allowCircularReferences &&
 			isSingletonCurrentlyInCreation(beanName));
 	if (earlySingletonExposure) {
@@ -408,6 +487,7 @@ protected Object doCreateBean(final String beanName, final RootBeanDefinition mb
 			logger.trace("Eagerly caching bean '" + beanName +
 					"' to allow for resolving potential circular references");
 		}
+		//添加三级缓存，移除二级缓存
 		addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
 	}
 
@@ -430,6 +510,7 @@ protected Object doCreateBean(final String beanName, final RootBeanDefinition mb
 	}
 
 	if (earlySingletonExposure) {
+		//此时获取到三级缓存中的半成品对象，对象为匿名内部类
 		Object earlySingletonReference = getSingleton(beanName, false);
 		if (earlySingletonReference != null) {
 			if (exposedObject == bean) {
@@ -466,6 +547,34 @@ protected Object doCreateBean(final String beanName, final RootBeanDefinition mb
 	}
 
 	return exposedObject;
+}
+
+//AbstractAutowireCapableBeanFactory#getEarlyBeanReference
+protected Object getEarlyBeanReference(String beanName, RootBeanDefinition mbd, Object bean) {
+	Object exposedObject = bean;
+	//如果有AOP代理，则返回代理对象
+	if (!mbd.isSynthetic() && hasInstantiationAwareBeanPostProcessors()) {
+		for (BeanPostProcessor bp : getBeanPostProcessors()) {
+			if (bp instanceof SmartInstantiationAwareBeanPostProcessor) {
+				SmartInstantiationAwareBeanPostProcessor ibp = (SmartInstantiationAwareBeanPostProcessor) bp;
+				exposedObject = ibp.getEarlyBeanReference(exposedObject, beanName);
+			}
+		}
+	}
+	return exposedObject;
+}
+
+//DefaultSingletonBeanRegistry#addSingletonFactory
+//将半成品对象添加进三级缓存，同时移除二级缓存
+protected void addSingletonFactory(String beanName, ObjectFactory<?> singletonFactory) {
+	Assert.notNull(singletonFactory, "Singleton factory must not be null");
+	synchronized (this.singletonObjects) {
+		if (!this.singletonObjects.containsKey(beanName)) {
+			this.singletonFactories.put(beanName, singletonFactory);
+			this.earlySingletonObjects.remove(beanName);
+			this.registeredSingletons.add(beanName);
+		}
+	}
 }
 
 //AbstractAutowireCapableBeanFactory#createBeanInstance
