@@ -30,13 +30,13 @@ public class UserProxy {
         System.out.println("UserProxy before......");
     }
 
-    //最终通知
+    //最终通知（代码正常与否都将执行）
     @After(value = "execution(* com.qinh.aspect.annotation.User.add(..))")
     public void after(){
         System.out.println("after......");
     }
 
-    //返回通知
+    //返回通知（代码出现异常，则不调用）
     @AfterReturning(value = "execution(* com.qinh.aspect.annotation.User.add(..))")
     public void afterReturning(){
         System.out.println("afterReturning......");
