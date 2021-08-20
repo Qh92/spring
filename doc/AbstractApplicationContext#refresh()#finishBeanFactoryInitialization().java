@@ -448,12 +448,15 @@ protected Object doCreateBean(final String beanName, final RootBeanDefinition mb
 		throws BeanCreationException {
 
 	// Instantiate the bean.
+	// 这个beanWrapper是用来持有创建出来的bean对象
 	BeanWrapper instanceWrapper = null;
 	if (mbd.isSingleton()) {
+		//如果是单例对象，从factoryBean实例缓存中移除当前bean定义信息
 		instanceWrapper = this.factoryBeanInstanceCache.remove(beanName);
 	}
 	if (instanceWrapper == null) {
 		//创建bean实例，反射实现
+		//根据执行bean使用对应的策略创建新的实例，如：工厂方法，构造函数主动注入，简单初始化
 		instanceWrapper = createBeanInstance(beanName, mbd, args);
 	}
 	//获取到bean实例
@@ -711,6 +714,7 @@ protected void populateBean(String beanName, RootBeanDefinition mbd, @Nullable B
 
 	if (pvs != null) {
 		//通过反射setXX将属性值注入到对象中
+		//开始填充属性值
 		applyPropertyValues(beanName, mbd, bw, pvs);
 	}
 }

@@ -11,6 +11,7 @@ protected ConfigurableListableBeanFactory obtainFreshBeanFactory() {
 
 //AbstractRefreshableApplicationContext#refreshBeanFactory
 protected final void refreshBeanFactory() throws BeansException {
+	//如果存在beanFactory，则销毁beanFactory
 	if (hasBeanFactory()) {
 		destroyBeans();
 		closeBeanFactory();
@@ -18,9 +19,12 @@ protected final void refreshBeanFactory() throws BeansException {
 	try {
 		//创建DefaultListableBeanFactory beanFactory工厂
 		DefaultListableBeanFactory beanFactory = createBeanFactory();
+		//为了序列化指定id，可以从id反序列化到beanFactory对象
 		beanFactory.setSerializationId(getId());
 		//设置bean的创建是否支持覆盖
+		//定制beanFactory，设置相关属性，包括是否允许覆盖同名称的不同定义的对象以及循环依赖
 		customizeBeanFactory(beanFactory);
+		//初始化documentReader，并进行XML文件读取及解析，默认命名空间的解析，自定义标签的解析
 		loadBeanDefinitions(beanFactory);
 		this.beanFactory = beanFactory;
 	}
