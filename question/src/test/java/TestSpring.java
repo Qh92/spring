@@ -1,7 +1,9 @@
+import com.qinh.context.MyClassPathXmlApplicationContext;
 import com.qinh.dependence.constructor.A;
 import com.qinh.dependence.constructor.B;
 import com.qinh.dependence.constructor.C;
 import org.junit.Test;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -32,8 +34,8 @@ public class TestSpring {
     @Test
     public void t2(){
         //1.加载Spring配置文件
-        //BeanFactory beanFactory = new ClassPathXmlApplicationContext("bean1.xml");
-        ApplicationContext context = new ClassPathXmlApplicationContext("bean1.xml");
+        ApplicationContext context = new MyClassPathXmlApplicationContext("bean1.xml");
+        //ApplicationContext context = new ClassPathXmlApplicationContext("bean1.xml");
 
         //2.获取配置创建的对象 报如下异常
         A a = context.getBean("a", A.class);
