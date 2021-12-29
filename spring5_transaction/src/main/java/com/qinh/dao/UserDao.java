@@ -10,4 +10,6 @@ public interface UserDao {
     void addMoney();
 
     void reduceMeney();
+
+    void modifyAge();
 }

@@ -33,4 +33,10 @@ public class UserDaoImpl implements UserDao{
         String sql = "update t_account set money = money - ? where username = ? ";
         jdbcTemplate.update(sql,100,"mary");
     }
+
+    @Override
+    public void modifyAge() {
+        String sql = "update test set age = 33 where id = ?";
+        jdbcTemplate.update(sql, 1);
+    }
 }

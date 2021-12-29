@@ -1,4 +1,5 @@
 import com.qinh.config.SpringConfig;
+import com.qinh.service.TransactionValidService;
 import com.qinh.service.UserService;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
@@ -26,6 +27,14 @@ public class TestSpring {
         ApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig.class);
         UserService service = context.getBean("userService", UserService.class);
         service.accountMoney();
+    }
+
+    @Test
+    public void t3(){
+        ApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig.class);
+        TransactionValidService service = context.getBean("transactionValidService", TransactionValidService.class);
+        //service.update1();
+        service.update2();
     }
 
 }

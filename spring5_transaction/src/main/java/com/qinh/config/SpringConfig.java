@@ -32,9 +32,9 @@ public class SpringConfig {
     public DataSource getDruidDataSource(){
         DruidDataSource dataSource = new DruidDataSource();
         dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        dataSource.setUrl("jdbc:mysql://192.168.116.129:3306/demo?useUnicode=true&characterEncoding=utf-8&useSSL=false");
+        dataSource.setUrl("jdbc:mysql://47.106.194.106:3306/test?useUnicode=true&characterEncoding=utf-8&useSSL=false");
         dataSource.setUsername("root");
-        dataSource.setPassword("root");
+        dataSource.setPassword("123456");
         return dataSource;
     }
 
