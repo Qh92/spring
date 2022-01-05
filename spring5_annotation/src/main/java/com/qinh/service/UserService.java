@@ -28,7 +28,10 @@ public class UserService {
     @Qualifier(value = "userDaoImpl2")
     private UserDao userDao;*/
 
-    //@Resource  //根据类型注入
+
+    //@Resource(name = "userDaoImpl2")
+    //@Resource  //根据名称注入，如果找不到就按类型
+    //private UserDao userDaoImpl2;
     @Resource(name = "userDaoImpl2")
     private UserDao userDao;
 
