@@ -3,7 +3,7 @@ package com.qinh.aspect.annotation;
 import org.springframework.stereotype.Component;
 
 /**
- * 被增强类
+ * 被增强类 连接点
  *
  * @Author Qh
  * @Date 2021/4/16 19:35
@@ -12,6 +12,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class User {
 
+    /**
+     * 切点
+     */
     public void add(){
 
         /*try {

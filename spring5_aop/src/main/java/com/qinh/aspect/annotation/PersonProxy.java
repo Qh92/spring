@@ -6,6 +6,9 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
+ * 通知（增强）
+ * 切面：将通知织入切点的过程
+ *
  * @author Qh
  * @version 1.0
  * @date 2021-04-17-18:44
@@ -17,7 +20,7 @@ public class PersonProxy {
 
     //前置通知
     //@Before注解表示作为前置通知
-    @Before(value = "execution(* com.qinh.aspect.annotation.User.add(..))")
+    //@Before(value = "execution(* com.qinh.aspect.annotation.User.add(..))")
     public void before(){
         System.out.println("PersonProxy before......");
     }
