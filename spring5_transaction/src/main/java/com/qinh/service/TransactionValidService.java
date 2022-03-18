@@ -21,7 +21,7 @@ public class TransactionValidService {
     @Autowired
     private UserDao userDao;
 
-    @Autowired
+    @Autowired(required = false)
     private TransactionTemplate transactionTemplate;
 
     @Transactional
@@ -59,7 +59,7 @@ public class TransactionValidService {
      * 2.方法中调用同类的方法
      * 简单的说就是一个类中的update2方法（未标注声明式事务）在内部调用了update0方法(标注了声明式事务)，这样会导致update0方法中的事务失效
      */
-    //@Transactional
+    @Transactional
     public void update2(){
         update0();
     }
